@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Ophthalmic Imaging Upload & Gallery</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root{
+      --primary:#1f2937; 
+      --accent:#0f766e;
+      --accent-soft:#ecfdf5;
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --muted:#6b7280;
+    }
+    *{ box-sizing:border-box }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:var(--bg);
+      color:var(--primary);
+    }
+    header{
+      background:#ffffff;
+      color:var(--primary);
+      padding:1rem 1.25rem;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid var(--border);
+    }
+    header .brand{
+      display:flex;
+      gap:.6rem;
+      align-items:center;
+      font-weight:700;
+    }
+    header .pill{
+      background:var(--accent-soft);
+      color:var(--accent);
+      font-weight:600;
+      padding:.15rem .5rem;
+      border-radius:.5rem;
+      font-size:.75rem;
+    }
+    main{ max-width:980px; margin:1rem auto; padding:0 1rem }
+    .card{
+      background:#fff;
+      border:1px solid var(--gray-200);
+      border-radius:14px;
+      padding:1rem;
+      box-shadow:0 2px 10px rgba(0,0,0,.04);
+      margin-bottom:1rem;
+    }
+    h3{ color:var(--uva-navy); margin:.2rem 0 .6rem }
+    .controls{ display:flex; gap:.6rem; flex-wrap:wrap }
+    input[type=file]{
+      padding:.4rem;
+      border:1px solid var(--gray-200);
+      border-radius:10px;
+    }
+    button{
+      background:var(--accent);
+      color:#ffffff;
+      border:none;
+      padding:.6rem 1rem;
+      border-radius:8px;
+      font-weight:600;
+      cursor:pointer;
+    }
+    button.secondary{
+      background:#ffffff;
+      color:var(--accent);
+      border:1px solid var(--border);
+    }
+    .note{
+      background:#fff7ed;
+      border:1px solid #fed7aa;
+      color:#7c2d12;
+      padding:.6rem .8rem;
+      border-radius:10px;
+      margin:.6rem 0;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(180px,1fr));
+      gap:12px;
+    }
+    .item{
+      border:1px solid var(--gray-200);
+      border-radius:12px;
+      padding:8px;
+      background:#fff;
+    }
+    .thumb{
+      width:100%;
+      height:160px;
+      object-fit:cover;
+      border-radius:8px;
+      background:#f3f4f6;
+    }
+    .cap{
+      font-size:.82rem;
+      color:var(--gray-600);
+      margin-top:.35rem;
+      word-break:break-all;
+    }
+    .muted{ color:var(--gray-600); font-size:.9rem }
+    footer{
+      text-align:center;
+      color:var(--gray-600);
+      padding:1.25rem 0;
+    }
+    .spinner{
+      display:inline-block;
+      width:18px;
+      height:18px;
+      border:2px solid #cbd5e1;
+      border-top-color:var(--uva-blue);
+      border-radius:50%;
+      animation:spin .8s linear infinite;
+    }
+    @keyframes spin{ to{ transform:rotate(360deg) } }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="brand">
+      <span>Ophthalmic Imaging Service</span>
+    </div>
+    <div class="muted">Internal upload · Read-only image review </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h3>Upload Clinical Image</h3>
+      <div class="note">
+        This demo simulates image uploads by ophthalmology technicians.
+        No patient identifiers should be included.
+      </div>
+      <div class="controls">
+        <input type="file" id="f" accept="image/*" />
+        <button id="uploadBtn" onclick="send()">Upload</button>
+        <button class="secondary" onclick="document.getElementById('f').value=''">Reset</button>
+        <span id="uploadStatus" class="muted"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Image Gallery</h3>
+      <div class="muted"><span id="count">0 images</span></div>
+      <div id="galleryNote" class="note" style="display:none"></div>
+      <div id="grid" class="grid"></div>
+    </section>
+  </main>
+
+  <footer>
+    Flask · Azure Blob Storage · Educational Medical Imaging Demo
+  </footer>
+
+<script>
+const grid = document.getElementById('grid');
+const countEl = document.getElementById('count');
+const noteEl  = document.getElementById('galleryNote');
+const uploadBtn = document.getElementById('uploadBtn');
+const uploadStatus = document.getElementById('uploadStatus');
+
+async function send(){
+  const f = document.getElementById('f').files[0];
+  if(!f) return alert("Choose an image first.");
+  uploadStatus.innerHTML = '<span class="spinner"></span> Uploading…';
+  uploadBtn.disabled = true;
+
+  try{
+    const fd = new FormData();
+    fd.append("file", f);
+    const r = await fetch("/api/v1/upload", { method:"POST", body:fd });
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error);
+    await loadGallery();
+  }catch(e){
+    alert(e.message);
+  }finally{
+    uploadBtn.disabled = false;
+    uploadStatus.textContent = "";
+  }
+}
+
+async function loadGallery(){
+  grid.innerHTML = '<span class="muted"><span class="spinner"></span> Loading…</span>';
+  const r = await fetch("/api/v1/gallery");
+  const j = await r.json();
+  if(!j.ok){ grid.innerHTML=""; return; }
+  grid.innerHTML="";
+  countEl.textContent = `${j.gallery.length} images`;
+
+  j.gallery.forEach(u=>{
+    const d=document.createElement("div");
+    d.className="item";
+    d.innerHTML=`<img class="thumb" src="${u}" /><div class="cap">${u.split('/').pop()}</div>`;
+    grid.appendChild(d);
+  });
+}
+
+document.addEventListener("DOMContentLoaded", loadGallery);
+</script>
+</body>
+</html>
