@@ -15,6 +15,7 @@ The course concepts that were used in this project include Flask for web API, Az
 
 **Architecture Diagram:**
 An architecture diagram is included in /assets and embedded in the repository. 
+![Architecture Diagram](assets/architecture.png)
 
 **Data/Models/Services:**
 The application handles ophthalmic image files that are uploaded using a web interface and stored in Azure Blob Storage. 
