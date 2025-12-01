@@ -21,13 +21,16 @@ The application handles ophthalmic image files that are uploaded using a web int
 
 ## 3) How to Run (Local)
 
-# build
+```bash
+# build the container image
 docker build -t ophthalmic-image-service .
-# run
+
+# run the container
 docker run --rm -p 8080:8080 --env-file .env ophthalmic-image-service
+
 # health check
 curl http://localhost:8080/api/v1/health
-
+```
 ## 4) Design Decisions
 **Why this concept?**
 Flask provides a framework for minimal web API service. Azure Blob Storage also provides efficient storage for large image files. Docker enables consistent deployment across machines and environments. Furthermore, these concepts and tools were covered in lecture and assignments. 
@@ -42,7 +45,7 @@ There are no secrets that are committed to the repository and credentials are in
 A health check endpoint is included to indicate service availability. Containerization ensures consistent runtime and testing. 
 
 ## 5) Results and Evaluation
-	Through the web form, users can upload ophthalmic images, which appear immediately in the gallery. The health endpoint indicates that the service is available and running correctly. Testing was performed by uploading images through the browser and verified through the gallery. 
+Through the web form, users can upload ophthalmic images, which appear immediately in the gallery. The health endpoint indicates that the service is available and running correctly. Testing was performed by uploading images through the browser and verified through the gallery. 
 
 ## 6) What’s Next
 Future improvements would focus on security. Adding authentication and access control would restrict upload to authorized users. Furthermore, restriction on file type and size would ensure efficient and safe storage. The system could also associate each image with patient  information/history and past scans for more efficient clinical databases.  
